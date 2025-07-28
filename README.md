@@ -9,7 +9,7 @@ This is a minimal setup to demonstrate Kubernetes Network Policies.
 
 ## Deploy
 ```bash
-kubectl apply -f .
+kubectl apply -f all-in-one.yaml
 ```
 
 ## Test
@@ -26,5 +26,5 @@ kubectl exec -n external-ns external-api -- curl -s backend.app-ns.svc.cluster.l
 
 ## Cleanup
 ```bash
-kubectl delete namespace app-ns external-ns
+kubectl delete -f all-in-one.yaml
 ```
