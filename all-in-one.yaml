@@ -115,6 +115,9 @@ spec:
     - namespaceSelector:
         matchLabels:
           name: external-ns
+    ports:
+    - protocol: TCP
+      port: 80
 ---
 # Allow external-api to receive from backend only
 apiVersion: networking.k8s.io/v1
