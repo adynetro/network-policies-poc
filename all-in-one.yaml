@@ -149,10 +149,7 @@ spec:
     ports:
     - protocol: TCP
       port: 80
-  - to:
-    - ipBlock:
-        cidr: 0.0.0.0/0
-    ports:
+  - ports:
     - protocol: UDP
       port: 53
 ---
@@ -163,6 +160,9 @@ metadata:
   name: default-deny-ingress
   namespace: app-ns
 spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
   podSelector: {}
   policyTypes:
   - Ingress
