@@ -137,12 +137,15 @@ spec:
     matchLabels:
       app: backend
   policyTypes:
-  - Ingress
-  ingress:
+  - Egress
+  egress:
   - to:
     - namespaceSelector:
         matchLabels:
           name: external-ns
+      podSelector:
+        matchLabels:
+          app: external-api
     ports:
     - protocol: TCP
       port: 80
@@ -152,27 +155,6 @@ spec:
     ports:
     - protocol: UDP
       port: 53
----
-# Allow external-api to receive from backend only
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-external-api-ingress
-  namespace: external-ns
-spec:
-  podSelector:
-    matchLabels:
-      app: external-api
-  policyTypes:
-  - Ingress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: app-ns
-      podSelector:
-        matchLabels:
-          app: backend
 ---
 # Block external-api → backend
 apiVersion: networking.k8s.io/v1
@@ -194,6 +176,3 @@ spec:
       podSelector:
         matchLabels:
           app: external-api
-    ports:
-    - protocol: TCP
-      port: 80
