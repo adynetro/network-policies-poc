@@ -137,8 +137,8 @@ spec:
     matchLabels:
       app: backend
   policyTypes:
-  - Egress
-  egress:
+  - Ingress
+  ingress:
   - to:
     - namespaceSelector:
         matchLabels:
