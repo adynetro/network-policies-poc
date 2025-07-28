@@ -1,0 +1,138 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-ns
+  labels:
+    name: app-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external-ns
+  labels:
+    name: external-ns
+---
+apiVersion: apps/v1
+kind: Pod
+metadata:
+  name: frontend
+  namespace: app-ns
+  labels:
+    app: frontend
+spec:
+  containers:
+  - name: app
+    image: nginx
+    ports:
+    - containerPort: 80
+---
+apiVersion: apps/v1
+kind: Pod
+metadata:
+  name: backend
+  namespace: app-ns
+  labels:
+    app: backend
+spec:
+  containers:
+  - name: app
+    image: nginx
+    ports:
+    - containerPort: 80
+---
+apiVersion: apps/v1
+kind: Pod
+metadata:
+  name: external-api
+  namespace: external-ns
+  labels:
+    app: external-api
+spec:
+  containers:
+  - name: app
+    image: nginx
+    ports:
+    - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: app-ns
+spec:
+  selector:
+    app: backend
+  ports:
+  - port: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-api
+  namespace: external-ns
+spec:
+  selector:
+    app: external-api
+  ports:
+  - port: 80
+---
+# Allow frontend → backend
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: app-ns
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+---
+# Allow backend → external-api
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-to-external
+  namespace: app-ns
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+  - Egress
+  egress:
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: external-ns
+---
+# Allow external-api to receive from backend only
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-external-api-ingress
+  namespace: external-ns
+spec:
+  podSelector:
+    matchLabels:
+      app: external-api
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: app-ns
+      podSelector:
+        matchLabels:
+          app: backend
