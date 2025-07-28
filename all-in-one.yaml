@@ -12,47 +12,79 @@ metadata:
   labels:
     name: external-ns
 ---
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: frontend
   namespace: app-ns
-  labels:
-    app: frontend
 spec:
-  containers:
-  - name: app
-    image: nginx
-    ports:
-    - containerPort: 80
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: app
+        image: nginx
+        ports:
+        - containerPort: 80
 ---
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: backend
   namespace: app-ns
-  labels:
-    app: backend
 spec:
-  containers:
-  - name: app
-    image: nginx
-    ports:
-    - containerPort: 80
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: app
+        image: nginx
+        ports:
+        - containerPort: 80
 ---
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: external-api
   namespace: external-ns
-  labels:
-    app: external-api
 spec:
-  containers:
-  - name: app
-    image: nginx
-    ports:
-    - containerPort: 80
+  replicas: 1
+  selector:
+    matchLabels:
+      app: external-api
+  template:
+    metadata:
+      labels:
+        app: external-api
+    spec:
+      containers:
+      - name: app
+        image: nginx
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: app-ns
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 80
 ---
 apiVersion: v1
 kind: Service
