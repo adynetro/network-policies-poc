@@ -173,3 +173,27 @@ spec:
       podSelector:
         matchLabels:
           app: backend
+---
+# Block external-api → backend
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: block-external-api-to-backend
+  namespace: app-ns
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: external-ns
+      podSelector:
+        matchLabels:
+          app: external-api
+    ports:
+    - protocol: TCP
+      port: 80
