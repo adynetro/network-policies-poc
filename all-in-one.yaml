@@ -167,7 +167,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: external-ns
+          name: app-ns
       podSelector:
         matchLabels:
           app: backend
