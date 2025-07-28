@@ -156,16 +156,16 @@ spec:
     - protocol: UDP
       port: 53
 ---
-# Block external-api → backend
+# Deny all ingress traffic in app-ns by default
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: block-external-api-to-backend
+  name: default-deny-ingress
   namespace: app-ns
 spec:
-  podSelector:
-    matchLabels:
-      app: backend
+  podSelector: {}
+  policyTypes:
+  - Ingress
   policyTypes:
   - Ingress
   ingress:
