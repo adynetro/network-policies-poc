@@ -2,21 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-   # Allow frontend to connect to backend only
-  - to:
-    - podSelector:
-        matchLabels:
-          app: backend
-    ports:
-    - protocol: TCP
-      port: 8080
-
----
-# Network Policy 2: Allow Backend to access External API (cross-namespace)
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-backend-to-external
+  name: allow-frontend-to-backend
   namespace: app-ns
 spec:
   podSelector:
@@ -89,11 +75,11 @@ spec:
       port: 8080
 
 ---
-# Network Policy 4: Allow External API to access only google.ro
+# Network Policy 4: Allow External API to access internet (including google.ro)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: external-api-egress-google-only
+  name: external-api-egress-internet
   namespace: external-ns
 spec:
   podSelector:
@@ -109,23 +95,19 @@ spec:
       port: 53
     - protocol: TCP
       port: 53
-  # Allow HTTPS access to google.ro (443)
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 443
-    # This allows all external HTTPS traffic - we'll need to use a more specific approach
-  # Allow HTTP access to google.ro (80)
+  # Allow HTTP access (port 80)
   - to: []
     ports:
     - protocol: TCP
       port: 80
-    # Note: Kubernetes NetworkPolicies cannot filter by domain name directly
-    # This allows HTTP/HTTPS to any external IP, but combined with DNS restrictions
-    # and application-level controls, it provides reasonable security
+  # Allow HTTPS access (port 443)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
 
 ---
-# Network Policy 5: Default deny all for Frontend egress (except to Backend)
+# Network Policy 5: Control Frontend egress (allow DNS and Backend access only)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
