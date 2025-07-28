@@ -1,18 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fro      containers:
-      - name: backend
-        image: registry.access.redhat.com/ubi8/python-39:latest
-        ports:
-        - containerPort: 8080
-        # Run a simple HTTP server using Python
-        command: ["/bin/sh"]
-        args: ["-c", "echo 'Backend Service Ready' > /tmp/index.html && cd /tmp && python3 -m http.server 8080"]
-        securityContext:
-          runAsNonRoot: true
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: falsepace: app-ns
+  name: frontend
+  namespace: app-ns
   labels:
     app: frontend
     tier: frontend
@@ -27,6 +17,16 @@ spec:
         app: frontend
         tier: frontend
     spec:
+      initContainers:
+      - name: install-curl
+        image: registry.access.redhat.com/ubi8/ubi-minimal:latest
+        command: ["/bin/sh"]
+        args: ["-c", "microdnf install -y curl && cp /usr/bin/curl /shared/curl"]
+        volumeMounts:
+        - name: shared-tools
+          mountPath: /shared
+        securityContext:
+          runAsUser: 0  # Init container can run as root
       containers:
       - name: frontend
         image: registry.access.redhat.com/ubi8/python-39:latest
@@ -35,6 +35,12 @@ spec:
         # Run a simple HTTP server using Python
         command: ["/bin/sh"]
         args: ["-c", "echo 'Frontend Service Ready' > /tmp/index.html && cd /tmp && python3 -m http.server 8080"]
+        volumeMounts:
+        - name: shared-tools
+          mountPath: /shared
+        env:
+        - name: PATH
+          value: "/shared:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
         securityContext:
           runAsNonRoot: true
           allowPrivilegeEscalation: false
@@ -46,6 +52,9 @@ spec:
           limits:
             memory: "128Mi"
             cpu: "100m"
+      volumes:
+      - name: shared-tools
+        emptyDir: {}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -66,17 +75,32 @@ spec:
         app: backend
         tier: backend
     spec:
+      initContainers:
+      - name: install-curl
+        image: registry.access.redhat.com/ubi8/ubi-minimal:latest
+        command: ["/bin/sh"]
+        args: ["-c", "microdnf install -y curl && cp /usr/bin/curl /shared/curl"]
+        volumeMounts:
+        - name: shared-tools
+          mountPath: /shared
+        securityContext:
+          runAsUser: 0  # Init container can run as root
       containers:
       - name: backend
-        image: curlimages/curl:latest
+        image: registry.access.redhat.com/ubi8/python-39:latest
         ports:
         - containerPort: 8080
-        # Run a simple HTTP server that works with non-root user
+        # Run a simple HTTP server using Python
         command: ["/bin/sh"]
-        args: ["-c", "echo 'Backend Service Ready' > /tmp/index.html && while true; do { echo -e 'HTTP/1.1 200 OK\r\n\r\nBackend Service Ready'; } | nc -l -p 8080; done"]
+        args: ["-c", "echo 'Backend Service Ready' > /tmp/index.html && cd /tmp && python3 -m http.server 8080"]
+        volumeMounts:
+        - name: shared-tools
+          mountPath: /shared
+        env:
+        - name: PATH
+          value: "/shared:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
         securityContext:
           runAsNonRoot: true
-          runAsUser: 1000
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false
         resources:
@@ -86,6 +110,9 @@ spec:
           limits:
             memory: "128Mi"
             cpu: "100m"
+      volumes:
+      - name: shared-tools
+        emptyDir: {}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -106,6 +133,16 @@ spec:
         app: external-api
         tier: api
     spec:
+      initContainers:
+      - name: install-curl
+        image: registry.access.redhat.com/ubi8/ubi-minimal:latest
+        command: ["/bin/sh"]
+        args: ["-c", "microdnf install -y curl && cp /usr/bin/curl /shared/curl"]
+        volumeMounts:
+        - name: shared-tools
+          mountPath: /shared
+        securityContext:
+          runAsUser: 0  # Init container can run as root
       containers:
       - name: external-api
         image: registry.access.redhat.com/ubi8/python-39:latest
@@ -114,6 +151,12 @@ spec:
         # Run a simple HTTP server using Python
         command: ["/bin/sh"]
         args: ["-c", "echo 'External API Service Ready' > /tmp/index.html && cd /tmp && python3 -m http.server 8080"]
+        volumeMounts:
+        - name: shared-tools
+          mountPath: /shared
+        env:
+        - name: PATH
+          value: "/shared:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
         securityContext:
           runAsNonRoot: true
           allowPrivilegeEscalation: false
@@ -125,3 +168,6 @@ spec:
           limits:
             memory: "128Mi"
             cpu: "100m"
+      volumes:
+      - name: shared-tools
+        emptyDir: {}

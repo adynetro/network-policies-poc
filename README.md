@@ -9,9 +9,9 @@ This project demonstrates Kubernetes Network Policies with the following setup:
 - `external-ns`: Contains external-api deployment
 
 ### Deployments:
-- **Frontend**: Simple nginx pod in `app-ns`
-- **Backend**: Simple nginx pod in `app-ns` 
-- **External API**: Simple nginx pod in `external-ns`
+- **Frontend**: Python HTTP server in `app-ns` (OpenShift-compatible)
+- **Backend**: Python HTTP server in `app-ns` (OpenShift-compatible)
+- **External API**: Python HTTP server in `external-ns` (OpenShift-compatible)
 
 ### Network Policy Rules:
 ✅ **Frontend → Backend**: ALLOWED (same namespace)  
@@ -23,7 +23,12 @@ This project demonstrates Kubernetes Network Policies with the following setup:
 
 ## Quick Start
 
-1. Deploy the POC:
+### For OpenShift:
+```bash
+./deploy-openshift.sh
+```
+
+### For standard Kubernetes:
 ```bash
 ./deploy.sh
 ```
@@ -92,3 +97,30 @@ The setup creates 5 network policies:
 - **Application-level controls**: HTTP proxies, application firewalls
 
 **Current Implementation**: The policy allows HTTP/HTTPS traffic to any external IP, which includes google.ro but cannot restrict to only google.ro using standard Kubernetes NetworkPolicies.
+
+## OpenShift Compatibility
+
+This POC is designed to work with OpenShift's Security Context Constraints (SCC):
+
+- **Images**: Uses Red Hat UBI8 Python images that are OpenShift-certified
+- **Security**: Containers run as non-root users (except init containers for curl installation)
+- **HTTP Server**: Python's built-in HTTP server on port 8080
+- **Testing Tool**: curl is installed via init containers or package manager
+
+### Container Setup Options:
+
+1. **Standard**: Uses post-deployment curl installation (requires privileged access)
+2. **Init Container**: Uses init containers to install curl (see `02-deployments-with-init.yaml`)
+3. **Test Script**: `test-container-setup.sh` verifies curl availability
+
+### Troubleshooting OpenShift SCC Issues:
+
+If you encounter permission errors:
+```bash
+# Grant anyuid SCC to service accounts
+oc adm policy add-scc-to-user anyuid system:serviceaccount:app-ns:default
+oc adm policy add-scc-to-user anyuid system:serviceaccount:external-ns:default
+
+# Or use the init container approach
+kubectl apply -f manifests/02-deployments-with-init.yaml
+```
