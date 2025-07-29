@@ -33,5 +33,13 @@ else
 fi
 
 echo ""
+echo "=== Test 3: Frontend → Internet (should FAIL) ==="
+if timeout 10s kubectl exec -n fith $FE_POD -- curl -s --connect-timeout 5 -o /dev/null -w "%{http_code}" google.com | grep -q "200"; then
+    echo "❌ FAILED: Frontend can access Internet (policy not working)"
+else
+    echo "✅ SUCCESS: Frontend cannot access Internet (policy working)"
+fi
+
+echo ""
 echo "=== Network Policy Status ==="
 kubectl get networkpolicy -n fith
