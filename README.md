@@ -1,30 +1,52 @@
-# Simple Network Policy POC
+# OpenShift NetworkPolicy Proof of Concept
 
-This is a minimal setup to demonstrate Kubernetes Network Policies.
+## Overview
+This project demonstrates the use of OpenShift NetworkPolicies to control traffic between pods in a namespace. It includes two deployments (`frontend` and `backend`) using the `nginxinc/nginx-unprivileged` image, along with services and NetworkPolicies to manage ingress and egress traffic.
 
-## Setup
-- 2 namespaces: `app-ns` and `external-ns`
-- 3 deployments: frontend, backend (in app-ns), external-api (in external-ns)
-- Network policies to control traffic flow
+## Project Structure
+- **manifest/**: Contains all YAML manifests for resources and policies.
+  - `namespace.yaml`: Creates the `app-policies` namespace.
+  - `frontend-deployment.yaml`: Defines the `frontend` deployment.
+  - `backend-deployment.yaml`: Defines the `backend` deployment.
+  - `frontend-service.yaml`: Exposes the `frontend` deployment.
+  - `backend-service.yaml`: Exposes the `backend` deployment.
+  - `enable-networkpolicy.yaml`: Enables the NetworkPolicy to allow `frontend` → `backend` traffic.
+  - `disable-networkpolicy.yaml`: Disables all ingress traffic.
+- **Scripts**:
+  - `deploy-resources.sh`: Deploys all resources.
+  - `enable-networkpolicy.sh`: Enables the NetworkPolicy.
+  - `disable-networkpolicy.sh`: Disables the NetworkPolicy.
+  - `test-connectivity.sh`: Tests connectivity between `frontend` and `backend`.
 
-## Deploy
+## Usage
+
+### Deploy Resources
+Run the following command to deploy all resources:
 ```bash
-kubectl apply -f all-in-one.yaml
+bash deploy-resources.sh
 ```
 
-## Test
+### Enable NetworkPolicy
+Run the following command to enable the NetworkPolicy:
 ```bash
-# Should work: Frontend → Backend
-kubectl exec -n app-ns deployment/frontend -- curl -s backend.app-ns.svc.cluster.local
-
-# Should work: Backend → External API  
-kubectl exec -n app-ns deployment/backend -- curl -s external-api.external-ns.svc.cluster.local
-
-# Should fail: External API → Backend
-kubectl exec -n external-ns deployment/external-api -- curl -s backend.app-ns.svc.cluster.local --max-time 5
+bash enable-networkpolicy.sh
 ```
 
-## Cleanup
+### Disable NetworkPolicy
+Run the following command to disable the NetworkPolicy:
 ```bash
-kubectl delete -f all-in-one.yaml
+bash disable-networkpolicy.sh
 ```
+
+### Test Connectivity
+Run the following command to test connectivity:
+```bash
+bash test-connectivity.sh
+```
+
+## Notes
+- Ensure you have `kubectl` configured to interact with your OpenShift cluster.
+- The `nginxinc/nginx-unprivileged` image is used to comply with OpenShift's security policies.
+- NetworkPolicies are applied to control traffic between pods and to/from external sources.
+
+Feel free to modify the manifests and scripts to suit your requirements.
