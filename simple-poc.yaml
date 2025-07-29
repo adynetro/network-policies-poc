@@ -102,7 +102,7 @@ spec:
   policyTypes:
   - Ingress
 ---
-# Block frontend from accessing internet (deny all egress from fe except internal)
+# Block frontend from accessing internet (allow internal cluster only)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -115,14 +115,26 @@ spec:
   policyTypes:
   - Egress
   egress:
+  # Allow access to backend pods
   - to:
     - podSelector:
         matchLabels:
           app: be
-    ports:
-    - protocol: TCP
-      port: 80
-  - to: []
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
     ports:
     - protocol: UDP
       port: 53
+  # Allow access to cluster services (for service discovery)
+  - to:
+    - ipBlock:
+        cidr: 10.0.0.0/8
+  - to:
+    - ipBlock:
+        cidr: 172.16.0.0/12
+  - to:
+    - ipBlock:
+        cidr: 192.168.0.0/16
