@@ -1,16 +1,16 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-frontend-to-backend
+  name: block-backend-to-frontend
   namespace: app-policies
 spec:
   podSelector:
     matchLabels:
-      app: backend
+      app: frontend
   policyTypes:
   - Ingress
   ingress:
   - from:
     - podSelector:
         matchLabels:
-          app: frontend
+          app: backend
